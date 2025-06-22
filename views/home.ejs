@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOME PAGE</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f8f9fa;
+            margin: 0;
+            padding: 0;
+            color: #222;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 2rem;
+            font-size: 2.2rem;
+            color: #2a4365;
+        }
+        hr {
+            border: none;
+            border-top: 2px solid #e2e8f0;
+            margin: 1.5rem auto;
+            width: 80%;
+        }
+        p {
+            text-align: center;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+        span {
+            color: #3182ce;
+            font-weight: 500;
+        }
+        div, form {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+        button {
+            background: #3182ce;
+            color: #fff;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(49,130,206,0.08);
+        }
+        button:hover {
+            background: #265a8f;
+        }
+        h2 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 2rem;
+            font-size: 1.3rem;
+        }
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.3rem;
+            }
+            p, h2 {
+                font-size: 1rem;
+            }
+            button {
+                width: 100%;
+                padding: 0.75rem 0;
+            }
+            hr {
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>
+        Welcome to DataVerse: Your Gateway to the Ultimate Company Database!
+    </h1>
+    <hr>
+    <p>
+        Unlock the power of data. Connect, explore, and manage your users with ease.<br>
+        <span>Fast. Secure. Reliable.</span>
+    </p>
+    <div>
+        <form action="/users" method="GET">
+            <button type="submit"></button>
+                Access User Data
+            </button>
+        </form>
+    </div>
+    <h2>the total no. of user are:<%= count %></h2>
+    <form action="/user/new">
+  <button type="submit">Join Us Today</button>
+</form>
+
+</body>
+</html>
