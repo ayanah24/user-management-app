@@ -26,20 +26,26 @@ jobs:
             | jq -r '.jobId')
           echo "job_id=$JOB_ID" >> "$GITHUB_OUTPUT"
 
-      - name: Poll for result
+- name: Poll for result
         run: |
           for i in {1..30}; do
-            RESPONSE=$(curl -s ${{ vars.CODESENSE_URL }}/api/v1/review/${{ steps.submit.outputs.job_id }} \
+            RESPONSE=$(curl -s "${{ vars.CODESENSE_URL }}/api/v1/review/${{ steps.submit.outputs.job_id }}" \
               -H "Authorization: Bearer ${{ secrets.CODESENSE_API_KEY }}")
             STATUS=$(echo "$RESPONSE" | jq -r '.status')
+
             if [ "$STATUS" = "completed" ]; then
-              PASSED=$(echo "$RESPONSE" | jq -r '.passed')
               echo "$RESPONSE" | jq
-              [ "$PASSED" = "true" ] && exit 0 || exit 1
+              PASSED=$(echo "$RESPONSE" | jq -r '.passed')
+              if [ "$PASSED" = "true" ]; then
+                exit 0
+              else
+                exit 1
+              fi
             elif [ "$STATUS" = "failed" ]; then
               echo "Review job failed"
               exit 1
             fi
+
             sleep 5
           done
           echo "Timed out waiting for review"
