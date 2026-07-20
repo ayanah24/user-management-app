@@ -34,10 +34,12 @@ jobs:
             STATUS=$(echo "$RESPONSE" | jq -r '.status')
             if [ "$STATUS" = "completed" ]; then
               echo "$RESPONSE" | jq
-              PASSED=$(echo "$RESPONSE" | jq -r '.passed')
+              PASSED=$(echo "$RESPONSE" | jq -r '.passed' | xargs)
               if [ "$PASSED" = "true" ]; then
+                echo "✓ Review passed successfully"
                 exit 0
               else
+                echo "✗ Review failed (passed=$PASSED)"
                 exit 1
               fi
             elif [ "$STATUS" = "failed" ]; then
