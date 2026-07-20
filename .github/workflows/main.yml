@@ -19,20 +19,19 @@ jobs:
       - name: Submit for review
         id: submit
         run: |
-          JOB_ID=$(curl -s -X POST ${{ vars.CODESENSE_URL }}/api/v1/review \
+          JOB_ID=$(curl -s -X POST "${{ vars.CODESENSE_URL }}/api/v1/review" \
             -H "Authorization: Bearer ${{ secrets.CODESENSE_API_KEY }}" \
             -H "Content-Type: application/json" \
             -d "{\"diff\": $(jq -Rs . < diff.txt), \"repoName\": \"${{ github.repository }}\"}" \
             | jq -r '.jobId')
           echo "job_id=$JOB_ID" >> "$GITHUB_OUTPUT"
 
-- name: Poll for result
+      - name: Poll for result
         run: |
           for i in {1..30}; do
             RESPONSE=$(curl -s "${{ vars.CODESENSE_URL }}/api/v1/review/${{ steps.submit.outputs.job_id }}" \
               -H "Authorization: Bearer ${{ secrets.CODESENSE_API_KEY }}")
             STATUS=$(echo "$RESPONSE" | jq -r '.status')
-
             if [ "$STATUS" = "completed" ]; then
               echo "$RESPONSE" | jq
               PASSED=$(echo "$RESPONSE" | jq -r '.passed')
@@ -45,7 +44,6 @@ jobs:
               echo "Review job failed"
               exit 1
             fi
-
             sleep 5
           done
           echo "Timed out waiting for review"
