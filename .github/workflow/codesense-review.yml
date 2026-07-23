@@ -1,4 +1,4 @@
-name: CodeSense Review
+name: CodeSense AI Review
 
 on:
   pull_request:
@@ -13,34 +13,50 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get diff
-        run: git diff origin/${{ github.base_ref }} > diff.txt
+      - name: Get PR diff
+        run: |
+          git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} > diff.txt
 
-      - name: Submit for review
+      - name: Show diff size
+        run: |
+          echo "Diff line count:"
+          wc -l diff.txt
+          echo "---- diff content ----"
+          cat diff.txt
+
+      - name: Submit review
         id: submit
         run: |
-          JOB_ID=$(curl -s -X POST ${{ vars.CODESENSE_URL }}/api/v1/review \
+          DIFF=$(cat diff.txt | jq -Rs .)
+          RESPONSE=$(curl -s -X POST https://codesense-ai.duckdns.org/api/v1/review \
             -H "Authorization: Bearer ${{ secrets.CODESENSE_API_KEY }}" \
             -H "Content-Type: application/json" \
-            -d "{\"diff\": $(jq -Rs . < diff.txt), \"repoName\": \"${{ github.repository }}\"}" \
-            | jq -r '.jobId')
+            -d "{\"diff\": $DIFF, \"repoName\": \"${{ github.repository }}\"}")
+          echo "Submit response: $RESPONSE"
+          JOB_ID=$(echo "$RESPONSE" | jq -r '.jobId')
           echo "job_id=$JOB_ID" >> "$GITHUB_OUTPUT"
 
       - name: Poll for result
         run: |
-          for i in {1..30}; do
-            RESPONSE=$(curl -s ${{ vars.CODESENSE_URL }}/api/v1/review/${{ steps.submit.outputs.job_id }} \
+          JOB_ID=${{ steps.submit.outputs.job_id }}
+          for i in $(seq 1 30); do
+            RESULT=$(curl -s https://codesense-ai.duckdns.org/api/v1/review/$JOB_ID \
               -H "Authorization: Bearer ${{ secrets.CODESENSE_API_KEY }}")
-            STATUS=$(echo "$RESPONSE" | jq -r '.status')
+            STATUS=$(echo "$RESULT" | jq -r '.status')
             if [ "$STATUS" = "completed" ]; then
-              PASSED=$(echo "$RESPONSE" | jq -r '.passed')
-              echo "$RESPONSE" | jq
-              [ "$PASSED" = "true" ] && exit 0 || exit 1
+              PASSED=$(echo "$RESULT" | jq -r '.result.passed')
+              echo "$RESULT" | jq
+              if [ "$PASSED" != "true" ]; then
+                echo "❌ Review failed"
+                exit 1
+              fi
+              echo "✅ Review passed"
+              exit 0
             elif [ "$STATUS" = "failed" ]; then
-              echo "Review job failed"
+              echo "❌ Review job failed"
               exit 1
             fi
             sleep 5
           done
-          echo "Timed out waiting for review"
+          echo "⏱️ Timed out waiting for review"
           exit 1
